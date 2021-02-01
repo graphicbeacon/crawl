@@ -18,9 +18,30 @@ A simple usage example:
 $ mkdir nice_project
 $ cd nice_project
 
-$ crawl help # launch list of commands
+$ crawl -h # print usage information
+manage pubspec.yaml files and its dependencies.
+
+Usage: crawl <command> [arguments]
+
+Global options:
+-h, --help    Print this usage information.
+
+Available commands:
+  init      create a pubspec.yaml file
+  install   adds a new package
+  remove    removes a package
+  search    search for package
+  unused    list unused dependencies
+
+Run "crawl help <command>" for more information about a command.
+
 $ crawl init # launch pubspec.yaml creation wizard
 $ crawl install -p <pkg> # add a package to dependencies section
+$ crawl install -p <pkg> -d # add a package to dev_dependencies section
+$ crawl remove <pkg> # remove a package
+$ crawl search <pkg> # search package
+$ crawl unused # list unused packages in project. Searches `./lib` directory by default
+$ crawl unused --dir=<directory> # list unused packages in provided directory
 ```
 
 ## Features and bugs

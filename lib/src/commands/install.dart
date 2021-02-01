@@ -14,8 +14,13 @@ class InstallCommand extends Command {
   String get name => 'install';
 
   InstallCommand() {
-    argParser.addOption('package',
-        abbr: 'p', help: 'Specify package to install');
+    argParser
+      ..addOption('package', abbr: 'p', help: 'Specify package to install')
+      ..addOption('version', abbr: 'v', help: 'Set package version to install')
+      ..addFlag('dev',
+          abbr: 'd',
+          help: 'Add package to dev_dependencies group',
+          negatable: false);
   }
 
   @override
@@ -46,18 +51,39 @@ class InstallCommand extends Command {
       exit(1);
     }
 
-    final version = data['latest']['version'];
+    final version = resolveVersion(data);
     final current = PubSpec.fromFile('pubspec.yaml');
 
-    // Add new dependency
-    current.pubspec.dependencies
-        .addAll({name: HostedReference.fromJson('^$version')});
+    // Add entry to correct group
+    final entry = {name: HostedReference.fromJson(version)};
+    if (argResults.wasParsed('dev')) {
+      current.pubspec.devDependencies.addAll(entry);
+    } else {
+      current.pubspec.dependencies.addAll(entry);
+    }
 
-    current.saveToFile('pubspec.yaml');
+    current.saveToFile('.');
 
     // Update dependencies
-    'pub get'.run;
+    final isFlutter = current.pubspec.dependencies.containsKey('flutter');
+    (isFlutter ? 'flutter pub get' : 'pub get').run;
 
-    print(green('Installed $name ^$version'));
+    print(green('Added $name $version'));
+  }
+
+  String resolveVersion(Map package) {
+    if (argResults.wasParsed('version')) {
+      final filteredRelease = package['versions']
+          .where((release) => release['version'] == argResults['version'])
+          .toList();
+
+      if (filteredRelease.isNotEmpty) {
+        return filteredRelease[0]['version'];
+      }
+
+      print(orange(
+          'Package version ${argResults['version']} not found. Installing latest...'));
+    }
+    return '^${package['latest']['version']}';
   }
 }
